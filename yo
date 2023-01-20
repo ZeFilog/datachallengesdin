@@ -1,0 +1,5 @@
+# créer un dictionnaire de remplacement
+replacement_dict = {"très bas": 1, "bas": 2, "moyen": 3, "haut": 4, "très haut": 5}
+
+# remplacer les valeurs de la colonne catégorielle en utilisant le dictionnaire
+df["colonne_catégorielle"] = df["colonne_catégorielle"].replace(replacement_dict)
