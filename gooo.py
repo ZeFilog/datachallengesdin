@@ -11,10 +11,13 @@ df_c = pd.read_csv('data/communes_bre.csv', encoding='utf-8', sep=';')
 df_n = pd.read_csv('data/niveau_interventions.csv', encoding='ansi', sep=';')
 df_t = pd.read_csv('data/temps_trajet30.csv', encoding='latin-1', sep=';')
 df_d = pd.read_csv('data/densite.csv', encoding='latin-1', sep=';')
+#Filtrage trajet inter-ville <30min 
 df_t =df_t[(df_t['durée']<=1800) & (df_t['durée']!=0)]
+#Fusion bases
 merged_df = pd.merge(df_t, df_c, left_on='destination', right_on='Nom Officiel Commune Majuscule')
 merged_df_final = pd.merge(merged_df, df_n, left_on='Code Officiel Commune', right_on='code_insee_commune')
 
+#fonction donnat le code associé a la ville
 find_code = df_c[['Code Officiel Commune','Nom Officiel Commune Majuscule']]
 def ville(X):
     a = find_code[find_code['Nom Officiel Commune Majuscule']==X]['Code Officiel Commune'].values[0]
@@ -35,20 +38,22 @@ for i in lst_vill_ref:
             except:
                 None
 
+#importation du clac bretagne
 def geojson_load():
     url = 'https://france-geojson.gregoiredavid.fr/repo/regions/bretagne/communes-bretagne.geojson'
     req = requests.get(url)
     contenu = req.text
     with open('data\calc.geojson','w') as output:
         output.write(contenu)
-    
+
+
+#tracage des cartes geopandas    
 def graph_1():
     calc = gpd.read_file('data/calc.geojson')
     calc['code'] = calc['code'].astype(int)
     south = calc[calc['code'].isin(lst_vill_all)]
     south.plot(ax=calc.plot(),  color="red")
     plt.show()
-
 
 def graph_2():
     calc = gpd.read_file('data/calc.geojson')
