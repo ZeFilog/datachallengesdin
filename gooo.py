@@ -6,30 +6,58 @@ import os
 import geopandas as gpd
 import pandas as pd
 
-
-
-df_c = pd.read_csv('data/communes_bre.csv', encoding='latin-1', sep=';')
+#ouverture csv's
+df_c = pd.read_csv('data/communes_bre.csv', encoding='utf-8', sep=';')
 df_n = pd.read_csv('data/niveau_interventions.csv', encoding='ansi', sep=';')
 df_t = pd.read_csv('data/temps_trajet30.csv', encoding='latin-1', sep=';')
+df_d = pd.read_csv('data/densite.csv', encoding='latin-1', sep=';')
+df_t =df_t[(df_t['durée']<=1800) & (df_t['durée']!=0)]
+merged_df = pd.merge(df_t, df_c, left_on='destination', right_on='Nom Officiel Commune Majuscule')
+merged_df_final = pd.merge(merged_df, df_n, left_on='Code Officiel Commune', right_on='code_insee_commune')
 
-df_cs =df_c[['Nom Officiel Commune Majuscule','Code Officiel Commune']]
-df_cs = df_cs.rename(columns={"Code Officiel Commune": "code_insee_commune"})
+find_code = df_c[['Code Officiel Commune','Nom Officiel Commune Majuscule']]
+def ville(X):
+    a = find_code[find_code['Nom Officiel Commune Majuscule']==X]['Code Officiel Commune'].values[0]
+    return(a)
 
-yes = pd.merge(df_n,df_cs, on='code_insee_commune')
-yes2 = yes[['code_insee_commune', "Niveau d'activité réseau"]]
-yes3 = yes2[yes2["Niveau d'activité réseau"] =='Très Bas']
-lst = list(yes3['code_insee_commune'])
+a = ['Très Bas','Bas']#,'Moyen']
+b = ['Très Haut','Haut']#,'Moyen']
+high_r_act = merged_df_final[merged_df_final["Niveau d'activité réseau"].isin(b) &
+                             merged_df_final["Niveau d'activité clientèle"].isin(b)]
 
-'''
-url = 'https://france-geojson.gregoiredavid.fr/repo/regions/bretagne/communes-bretagne.geojson'
-req = requests.get(url)
-contenu = req.text
-with open('data\calc.geojson','w') as output:
-    output.write(contenu)
-'''
+lst_vill_ref=[35238,22278,29019,56260,56121,35288,35115]
+lst_vill_all = list(df_n['code_insee_commune'])
+for i in lst_vill_ref:
+    for j in merged_df_final[['code_insee_commune','depart','destination','durée']].values:
+        if j[0]==i:
+            try:
+                lst_vill_all.remove(ville(j[1]))
+            except:
+                None
 
-calc = gpd.read_file('data/calc.geojson')
-calc['code'] = calc['code'].astype(int)
-south = calc[calc['code'].isin(lst)]
+def geojson_load():
+    url = 'https://france-geojson.gregoiredavid.fr/repo/regions/bretagne/communes-bretagne.geojson'
+    req = requests.get(url)
+    contenu = req.text
+    with open('data\calc.geojson','w') as output:
+        output.write(contenu)
+    
+def graph_1():
+    calc = gpd.read_file('data/calc.geojson')
+    calc['code'] = calc['code'].astype(int)
+    south = calc[calc['code'].isin(lst_vill_all)]
+    south.plot(ax=calc.plot(),  color="red")
+    plt.show()
 
-south.plot(ax=calc.plot(),  color="red")
+
+def graph_2():
+    calc = gpd.read_file('data/calc.geojson')
+    south = df_d[['codgeo','dens_pop']]
+    df = pd.merge(calc, south, left_on='code', right_on='codgeo')
+    df.plot(ax=df.plot(),column ='dens_pop',  cmap="Greens")
+    plt.show()
+
+
+
+
+
