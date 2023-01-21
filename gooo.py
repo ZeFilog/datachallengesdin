@@ -62,6 +62,34 @@ def graph_2():
     df.plot(ax=df.plot(),column ='dens_pop',  cmap="Greens")
     plt.show()
 
+def matrice():
+    df_matrice = pd.DataFrame(merged_df_final)
+    df_matrice = df_matrice.explode('destination')
+
+    matrice = pd.crosstab(df_matrice["depart"],df_matrice["destination"]).to_numpy()
+
+    print(matrice)
+    
+
+
+def BFS(graph, start, end):
+    # Initialisation de la file d'attente et de la liste des sommets visités
+    queue = deque([start])
+    visited = set()
+
+    # Boucle de parcours
+    while queue:
+        vertex = queue.popleft()
+        if vertex not in visited:
+            visited.add(vertex)
+            if vertex == end:
+                return visited
+            # Ajout des voisins non visités à la file d'attente
+            for neighbor in graph[vertex]:
+                if neighbor not in visited:
+                    queue.append(neighbor)
+
+    return visited
 
 
 
